@@ -14,8 +14,6 @@ AFORIX es un sistema completo para el control y monitoreo de aforo (capacidad de
 
 - 🔐 **Sistema de Login** - Autenticación de usuarios
 - 📊 **Monitoreo en Tiempo Real** - Actualización automática cada 3 segundos
-- 📈 **Barras de Progreso Responsive** - Indicadores visuales animados
-- 🎨 **Interfaz Moderna** - Diseño elegante con animaciones suaves
 - 📱 **Responsive Design** - Funciona en móvil y desktop
 - 📉 **Gráficos Interactivos** - Visualización de datos históricos
 - 🔄 **API REST** - Endpoints para integración con dispositivos IoT
