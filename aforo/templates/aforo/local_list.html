@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Locales - AFORIX{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Título de la página -->
+  <div class="d-flex justify-content-between align-items-center mb-4 fade-in">
+    <div>
+      <h1 class="text-gradient mb-2">
+        <i class="fas fa-building"></i> Locales
+      </h1>
+      <p class="text-muted">Gestiona y monitorea todos tus locales</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+        <i class="fas fa-sync-alt fa-spin"></i> Actualizando
+      </span>
+    </div>
+  </div>
+
+  <!-- Formulario para crear nuevo local -->
+  <div class="create-local-form slide-up">
+    <h2 class="form-title">
+      <i class="fas fa-plus-circle"></i> Agregar Nuevo Local
+    </h2>
+    <form id="formLocal" class="mt-3">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nombre" class="form-label">
+            <i class="fas fa-signature"></i> Nombre del Local
+          </label>
+          <input 
+            id="nombre" 
+            class="form-control" 
+            placeholder="Ej: Restaurante Principal" 
+            required
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="direccion" class="form-label">
+            <i class="fas fa-map-marker-alt"></i> Dirección
+          </label>
+          <input 
+            id="direccion" 
+            class="form-control" 
+            placeholder="Ej: Calle Principal 123"
+            autocomplete="off"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="aforo_max" class="form-label">
+            <i class="fas fa-users"></i> Aforo Máximo
+          </label>
+          <input 
+            id="aforo_max" 
+            type="number" 
+            class="form-control" 
+            min="1" 
+            value="10" 
+            placeholder="Capacidad máxima"
+            required
+          >
+        </div>
+
+        <div class="form-group d-flex align-items-end">
+          <button class="btn btn-primary w-100" type="submit" style="height: 38px;">
+            <i class="fas fa-plus"></i> Crear Local
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Grid de Locales -->
+  <div id="lista" class="locales-grid">
+    <!-- Loading state -->
+    <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
+      <div class="spinner"></div>
+      <p class="mt-3 text-muted">Cargando locales...</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Verificar autenticación
+  if (!aforix.auth.isAuthenticated()) {
+    window.location.href = '/login/';
+    return;
+  }
+
+  // Cargar locales
+  async function cargarLocales() {
+    try {
+      const data = await aforix.api.get('/api/locales/');
+      const cont = document.getElementById('lista');
+      cont.innerHTML = '';
+
+      if (data.length === 0) {
+        cont.innerHTML = `
+          <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
+            <i class="fas fa-building" style="font-size: 4rem; color: var(--text-muted); margin-bottom: 1rem;"></i>
+            <h3 class="text-muted">No hay locales registrados</h3>
+            <p class="text-muted">Crea tu primer local usando el formulario de arriba</p>
+          </div>
+        `;
+        return;
+      }
+
+      data.forEach((l, index) => {
+        const col = document.createElement('div');
+        col.className = 'local-card slide-up';
+        col.style.animationDelay = `${index * 0.1}s`;
+
+        col.innerHTML = `
+          <div class="local-card-header">
+            <h3 class="local-name">${l.nombre}</h3>
+            <span class="local-badge">
+              <i class="fas fa-tag"></i> ID: ${l.id}
+            </span>
+          </div>
+          <div class="local-info">
+            <div class="local-address">
+              <i class="fas fa-map-marker-alt"></i>
+              ${l.direccion || 'Sin dirección'}
+            </div>
+            <div class="local-capacity">
+              <i class="fas fa-users"></i>
+              Aforo máximo: <strong>${l.aforo_max}</strong> personas
+            </div>
+          </div>
+          <div class="local-actions">
+            <a href="/local/${l.id}/" class="btn btn-primary">
+              <i class="fas fa-eye"></i> Ver Detalle
+            </a>
+          </div>
+        `;
+
+        cont.appendChild(col);
+        
+        // Animación al agregar
+        setTimeout(() => {
+          aforix.animations.fadeIn(col);
+        }, index * 100);
+      });
+
+    } catch (err) {
+      console.error(err);
+      document.getElementById('lista').innerHTML = `
+        <div class="text-center" style="grid-column: 1 / -1; padding: 3rem;">
+          <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+          <p class="text-danger">Error cargando locales. Por favor recarga la página.</p>
+        </div>
+      `;
+    }
+  }
+
+  // Formulario para crear local
+  document.getElementById('formLocal').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const nombre = document.getElementById('nombre').value.trim();
+    const direccion = document.getElementById('direccion').value.trim();
+    const aforo = parseInt(document.getElementById('aforo_max').value);
+
+    if (!nombre) {
+      aforix.utils.showNotification('El nombre es obligatorio', 'error');
+      aforix.animations.shake(document.getElementById('nombre'));
+      return;
+    }
+
+    if (aforo < 1) {
+      aforix.utils.showNotification('El aforo máximo debe ser mayor a 0', 'error');
+      aforix.animations.shake(document.getElementById('aforo_max'));
+      return;
+    }
+
+    const payload = {
+      nombre,
+      direccion,
+      aforo_max: aforo
+    };
+
+    try {
+      aforix.utils.showLoading();
+      await aforix.api.post('/api/locales/', payload);
+      
+      aforix.utils.showNotification('Local creado exitosamente', 'success');
+      e.target.reset();
+      
+      // Recargar lista con animación
+      setTimeout(() => {
+        cargarLocales();
+      }, 500);
+      
+    } catch (err) {
+      console.error(err);
+      aforix.utils.showNotification('No se pudo crear el local', 'error');
+      aforix.animations.shake(e.target);
+    } finally {
+      aforix.utils.hideLoading();
+    }
+  });
+
+  // Cargar locales al inicio
+  cargarLocales();
+  
+  // Actualizar usuario en header
+  const userSpan = document.getElementById('current-user');
+  if (userSpan) {
+    userSpan.textContent = aforix.auth.getCurrentUser();
+  }
+});
+</script>
+{% endblock %}

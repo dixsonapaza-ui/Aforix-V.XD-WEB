@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reportes - AFORIX{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Botón volver -->
+  <a href="{% url 'lista_locales' %}" class="btn btn-outline-primary mb-4 fade-in">
+    <i class="fas fa-arrow-left"></i> Volver a Locales
+  </a>
+
+  <!-- Header -->
+  <div class="detail-header fade-in">
+    <div>
+      <h1 class="detail-title">
+        <i class="fas fa-chart-bar"></i> Reportes del Local
+      </h1>
+      <p class="text-muted mb-0">Local ID: {{ local_id }}</p>
+    </div>
+  </div>
+
+  <!-- Información del Local -->
+  <div class="card mb-4 fade-in" id="localInfoCard">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h4 id="localNombreReporte" class="mb-1">Cargando...</h4>
+          <p class="text-muted mb-0" id="localDireccionReporte">---</p>
+        </div>
+        <div class="text-end">
+          <div class="stat-value" id="aforoMaximoReporte">---</div>
+          <div class="stat-label">Capacidad Máxima</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Opciones de Reportes -->
+  <div class="report-options">
+    <div class="report-card" onclick="generarReporte('diario')">
+      <div class="report-icon">
+        <i class="fas fa-calendar-day text-primary"></i>
+      </div>
+      <h3 class="report-title">Reporte Diario</h3>
+      <p class="report-description">Estadísticas de hoy</p>
+    </div>
+
+    <div class="report-card" onclick="generarReporte('semanal')">
+      <div class="report-icon">
+        <i class="fas fa-calendar-week text-success"></i>
+      </div>
+      <h3 class="report-title">Reporte Semanal</h3>
+      <p class="report-description">Últimos 7 días</p>
+    </div>
+
+    <div class="report-card" onclick="generarReporte('mensual')">
+      <div class="report-icon">
+        <i class="fas fa-calendar-alt text-info"></i>
+      </div>
+      <h3 class="report-title">Reporte Mensual</h3>
+      <p class="report-description">Últimos 30 días</p>
+    </div>
+
+    <div class="report-card" onclick="exportarPDF()">
+      <div class="report-icon">
+        <i class="fas fa-file-pdf text-danger"></i>
+      </div>
+      <h3 class="report-title">Exportar PDF</h3>
+      <p class="report-description">Descargar reporte</p>
+    </div>
+  </div>
+
+  <!-- Resumen Rápido -->
+  <div class="card mb-4 fade-in">
+    <div class="card-body">
+      <h3 class="mb-4">
+        <i class="fas fa-chart-line"></i> Resumen Rápido
+      </h3>
+      
+      <div class="row">
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="text-center p-3" style="background: var(--bg-secondary); border-radius: var(--border-radius-sm);">
+            <div class="stat-label">Aforo Actual</div>
+            <div class="stat-value" style="font-size: 2rem;" id="resumenAforoActual">---</div>
+          </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="text-center p-3" style="background: var(--bg-secondary); border-radius: var(--border-radius-sm);">
+            <div class="stat-label">Promedio Hoy</div>
+            <div class="stat-value" style="font-size: 2rem;" id="resumenPromedio">---</div>
+          </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="text-center p-3" style="background: var(--bg-secondary); border-radius: var(--border-radius-sm);">
+            <div class="stat-label">Pico Máximo</div>
+            <div class="stat-value" style="font-size: 2rem;" id="resumenPico">---</div>
+          </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+          <div class="text-center p-3" style="background: var(--bg-secondary); border-radius: var(--border-radius-sm);">
+            <div class="stat-label">Total Registros</div>
+            <div class="stat-value" style="font-size: 2rem;" id="resumenTotal">---</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Gráfico de Tendencias -->
+  <div class="card mb-4 fade-in">
+    <div class="card-body">
+      <h3 class="mb-4">
+        <i class="fas fa-chart-area"></i> Tendencias de Aforo
+      </h3>
+      
+      <canvas id="graficoAforo" style="max-height: 400px;"></canvas>
+      
+      <div class="mt-3 text-center">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="cambiarPeriodo('hoy')">
+            Hoy
+          </button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="cambiarPeriodo('semana')">
+            Semana
+          </button>
+          <button type="button" class="btn btn-outline-primary btn-sm" onclick="cambiarPeriodo('mes')">
+            Mes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Datos Recientes -->
+  <div class="card fade-in">
+    <div class="card-body">
+      <h3 class="mb-4">
+        <i class="fas fa-table"></i> Registros Recientes
+      </h3>
+      
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Aforo</th>
+              <th>Porcentaje</th>
+              <th>Origen</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="tablaRegistros">
+            <tr>
+              <td colspan="5" class="text-center">
+                <div class="spinner"></div>
+                <p class="mt-2 text-muted">Cargando registros...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script id="local_id" type="application/json">{{ local_id }}</script>
+{% endblock %}
+
+
+{% block extra_js %}
+<!-- Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let graficoAforo = null;
+let capacidadMaximaReporte = 0;
+const localId = JSON.parse(document.getElementById('local_id').textContent);
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Verificar autenticación
+  if (!aforix.auth.isAuthenticated()) {
+    window.location.href = '/login/';
+    return;
+  }
+
+  cargarDatosLocal();
+  cargarResumen();
+  cargarTablaRegistros();
+  inicializarGrafico();
+});
+
+// Cargar datos del local
+async function cargarDatosLocal() {
+  try {
+    const local = await aforix.api.get(`/api/locales/${localId}/`);
+    document.getElementById('localNombreReporte').textContent = local.nombre;
+    document.getElementById('localDireccionReporte').textContent = local.direccion || 'Sin dirección';
+    document.getElementById('aforoMaximoReporte').textContent = local.aforo_max;
+    capacidadMaximaReporte = local.aforo_max;
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+// Cargar resumen
+async function cargarResumen() {
+  try {
+    const ultimo = await aforix.api.get(`/api/locales/${localId}/ultimo/`);
+    const historial = await aforix.api.get(`/api/aforos/?local=${localId}`);
+    
+    document.getElementById('resumenAforoActual').textContent = ultimo.aforo || 0;
+    
+    if (historial.length > 0) {
+      // Calcular promedio
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const registrosHoy = historial.filter(r => {
+        const fecha = new Date(r.timestamp);
+        return fecha >= hoy;
+      });
+      
+      if (registrosHoy.length > 0) {
+        const promedio = Math.round(
+          registrosHoy.reduce((sum, r) => sum + r.aforo, 0) / registrosHoy.length
+        );
+        document.getElementById('resumenPromedio').textContent = promedio;
+      }
+      
+      // Pico máximo
+      const pico = Math.max(...historial.map(r => r.aforo));
+      document.getElementById('resumenPico').textContent = pico;
+      
+      // Total registros
+      document.getElementById('resumenTotal').textContent = historial.length;
+    }
+    
+    // Actualizar gráfico
+    actualizarGrafico('hoy');
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+// Cargar tabla de registros
+async function cargarTablaRegistros() {
+  try {
+    const historial = await aforix.api.get(`/api/aforos/?local=${localId}`);
+    const tbody = document.getElementById('tablaRegistros');
+    
+    if (historial.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center text-muted">
+            No hay registros disponibles
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    tbody.innerHTML = historial.slice(0, 20).map(r => {
+      const fecha = aforix.utils.formatDate(r.timestamp);
+      const porcentaje = capacidadMaximaReporte > 0 
+        ? Math.round((r.aforo / capacidadMaximaReporte) * 100)
+        : 0;
+      
+      let badgeClass = 'bg-success';
+      let estado = 'Normal';
+      if (porcentaje >= 90) {
+        badgeClass = 'bg-danger';
+        estado = 'Lleno';
+      } else if (porcentaje >= 60) {
+        badgeClass = 'bg-warning';
+        estado = 'Ocupado';
+      }
+      
+      return `
+        <tr>
+          <td>${fecha}</td>
+          <td><strong>${r.aforo}</strong></td>
+          <td>
+            <div class="progress" style="height: 20px;">
+              <div class="progress-bar ${badgeClass}" style="width: ${Math.min(porcentaje, 100)}%">
+                ${porcentaje}%
+              </div>
+            </div>
+          </td>
+          <td>${r.origen || '---'}</td>
+          <td><span class="badge ${badgeClass}">${estado}</span></td>
+        </tr>
+      `;
+    }).join('');
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+// Inicializar gráfico
+function inicializarGrafico() {
+  const ctx = document.getElementById('graficoAforo').getContext('2d');
+  
+  graficoAforo = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Aforo',
+        data: [],
+        borderColor: 'rgb(37, 99, 235)',
+        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+        tension: 0.4,
+        fill: true
+      }, {
+        label: 'Capacidad Máxima',
+        data: [],
+        borderColor: 'rgb(239, 68, 68)',
+        borderDash: [5, 5],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        },
+        title: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: capacidadMaximaReporte || 100
+        }
+      }
+    }
+  });
+}
+
+// Actualizar gráfico según período
+async function actualizarGrafico(periodo) {
+  try {
+    const historial = await aforix.api.get(`/api/aforos/?local=${localId}`);
+    
+    let datosFiltrados = historial;
+    const ahora = new Date();
+    
+    if (periodo === 'hoy') {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      datosFiltrados = historial.filter(r => new Date(r.timestamp) >= hoy);
+    } else if (periodo === 'semana') {
+      const semana = new Date();
+      semana.setDate(semana.getDate() - 7);
+      datosFiltrados = historial.filter(r => new Date(r.timestamp) >= semana);
+    } else if (periodo === 'mes') {
+      const mes = new Date();
+      mes.setDate(mes.getDate() - 30);
+      datosFiltrados = historial.filter(r => new Date(r.timestamp) >= mes);
+    }
+    
+    // Ordenar por fecha
+    datosFiltrados.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    // Limitar a últimos puntos para mejor visualización
+    const puntosMostrar = Math.min(datosFiltrados.length, 50);
+    const datosMostrar = datosFiltrados.slice(-puntosMostrar);
+    
+    const labels = datosMostrar.map(r => {
+      const fecha = new Date(r.timestamp);
+      return fecha.toLocaleString('es-ES', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    });
+    
+    const datos = datosMostrar.map(r => r.aforo);
+    const capacidad = new Array(datos.length).fill(capacidadMaximaReporte);
+    
+    graficoAforo.data.labels = labels;
+    graficoAforo.data.datasets[0].data = datos;
+    graficoAforo.data.datasets[1].data = capacidad;
+    graficoAforo.options.scales.y.max = capacidadMaximaReporte || 100;
+    graficoAforo.update();
+  } catch (error) {
+    console.error('Error actualizando gráfico:', error);
+  }
+}
+
+// Cambiar período del gráfico
+window.cambiarPeriodo = function(periodo) {
+  actualizarGrafico(periodo);
+};
+
+// Generar reporte
+window.generarReporte = function(tipo) {
+  aforix.utils.showNotification(`Generando reporte ${tipo}...`, 'info');
+  // Aquí podrías implementar la lógica para generar reportes más detallados
+};
+
+// Exportar PDF
+window.exportarPDF = function() {
+  aforix.utils.showNotification('Función de exportación PDF próximamente', 'info');
+  // Aquí podrías implementar la exportación a PDF usando librerías como jsPDF
+};
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+========================================
+RUTAS EXACTAS PARA COPIAR EN CMD
+========================================
+
+1. PARA IR AL DIRECTORIO DEL PROYECTO:
+========================================
+cd /d "C:\Users\Usuario\Desktop\AFORIX\AFORIX\AFORIX\Nueva carpeta (3)\control_aforo"
+
+
+2. PARA ACTIVAR EL ENTORNO VIRTUAL:
+========================================
+cd /d "C:\Users\Usuario\Desktop\AFORIX\AFORIX\AFORIX\Nueva carpeta (3)"
+venv\Scripts\activate.bat
+
+
+3. COMANDOS COMPLETOS (COPIA Y PEGA):
+========================================
+
+PASO 1 - Ir al directorio con el entorno virtual:
+cd /d "C:\Users\Usuario\Desktop\AFORIX\AFORIX\AFORIX\Nueva carpeta (3)"
+
+PASO 2 - Activar entorno virtual:
+venv\Scripts\activate.bat
+
+PASO 3 - Ir al directorio del proyecto Django:
+cd control_aforo
+
+PASO 4 - Iniciar servidor:
+python manage.py runserver
+
+
+========================================
+COMANDO TODO EN UNO (COPIA Y PEGA):
+========================================
+
+cd /d "C:\Users\Usuario\Desktop\AFORIX\AFORIX\AFORIX\Nueva carpeta (3)" && venv\Scripts\activate.bat && cd control_aforo && python manage.py runserver
+
+
+========================================
+
