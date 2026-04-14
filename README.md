@@ -201,7 +201,7 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 
 ## 👥 Autores
 
-- **Tu Nombre** - *Desarrollo inicial*
+- **Dixson Yonay Apaza Quilla** - *Desarrollo inicial*
 
 ## 🙏 Agradecimientos
 
